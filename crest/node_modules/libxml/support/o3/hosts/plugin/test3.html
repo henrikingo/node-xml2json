@@ -1,0 +1,88 @@
+<html>
+<head>
+<script src="require.js"></script>
+<script>
+var clients = [];
+var s;
+var ts=[],ti;
+function logw(txt){
+	var e = document.getElementById('dbgLog');
+	if (!e) {
+	  if (txt === undefined)
+		  return txt;
+	  ts.push(txt, "\n");
+	  window.setTimeout("logw()", 100);
+	  return txt;
+	}
+	if (txt === undefined) {
+		if (!ts) return txt;
+		txt = ts.join('');
+		ts  = null;
+	}
+	var t = txt + "";
+	
+	if (document.all) {
+		prev = document.getElementById('dbgLog').innerText;
+		document.getElementById('dbgLog').innerText = prev + t;
+	} else {
+		prev = document.getElementById('dbgLog').textContent;
+		document.getElementById('dbgLog').textContent = prev + t;
+	}
+	
+/*	e.insertAdjacentHTML("beforeend", t.replace(/ /g, "&nbsp;")
+		.replace(/\</g, "&lt;").replace(/\>/g, "&gt;")
+		.replace(/\n/g, "<br/>").replace(/\t/g, "&nbsp;&nbsp;&nbsp;")
+		+ "<br/>");
+	e.scrollTop = e.scrollHeight;*/
+	return txt;
+};
+
+var server, client, accepted;
+
+logw("starting:\n");
+require(["o3!xml", "o3!net"], 
+
+function (xml,net) {
+alert(xml.parseFromString("<html></html>").xml);
+	server = net.createServer(function (stream) {
+	  accepted = stream;
+	  stream.on('connect', function () {
+		logw("connect server side\n");
+		stream.write('first server message\r\n');
+	  });
+	  stream.on('data', function (data) {
+		logw("serv recv: \n" + data.toString());
+		stream.write(data);
+	  });
+	  stream.on('end', function () {
+		logw("end\n");
+		stream.write('goodbye\r\n');
+		stream.end();
+	  });
+	  stream.on('error', function(){
+		logw("server error");
+	  })
+	});
+	server.listen(8124, 'localhost');
+		
+	client = net.createConnection(8124, 'localhost');
+	client.on('connect',function(socket){
+		logw('client side connect\n');
+		socket.write('first client message');
+	})
+	client.on('data', function(data){
+		logw("create recv: \n" + data.toString());
+		client.write("bloody blah");
+	})
+	client.on('error', function(){
+		logw("client error");
+	})
+
+});
+
+</script>
+</head>
+<body>
+ 	<textarea name="dbgLog" id="dbgLog" cols="100" rows="25">
+	</textarea>  
+</body>

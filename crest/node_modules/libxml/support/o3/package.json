@@ -1,0 +1,8 @@
+{
+    "name": "o3-xml",
+    "version": "0.1.0",
+    "private": true,
+    "engines" : {
+        "node" : ">= 0.6.0"
+    }
+}

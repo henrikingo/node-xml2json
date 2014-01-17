@@ -1,0 +1,37 @@
+#define O3_VERSION "#VERSION#"
+#define O3_VERSION_STRING "#VERSIONSTRING#"
+#define O3_AJAX_DOMAIN "#DOMAIN#"
+
+#define O3_BASE_URL "#URL#"
+
+#define O3_UI_URL "#URL#"
+#define O3_REPO_URL "http://github.com/ajaxorg/o3-plugin-builds/raw/master/"
+
+
+#ifdef O3_WIN32
+#define O3_PLATFORM "win"
+#define O3_PLUGIN_NAME
+#define O3_PLUGIN_UPDATER "#WINUPDATER#"
+#define O3_PLUGIN_INSTALLER "#WININSTALLER#"
+#define O3_PLUGIN_VERSION "#WINVERSION#"
+#endif
+
+#ifdef O3_APPLE
+#define O3_PLATFORM "osx"
+#define O3_PLUGIN_NAME "#BASENAME#"
+#define O3_PLUGIN_UPDATER "#OSXUPDATER#"
+#define O3_PLUGIN_INSTALLER "#OSXINSTALLER#"
+#define O3_PLUGIN_VERSION "#OSXVERSION#"
+#define O3_PLUGIN_DIR "/Library/Internet Plug-Ins/#BASENAME#.plugin/Contents/MacOS"
+#define O3_PLUGIN_TMP "/tmp/#BASENAME#"
+#endif
+
+#ifdef O3_LINUX
+#define O3_PLATFORM "linux"
+#endif
+
+#ifdef O3_POSIX
+#define O3_PATH_TMP "/usr/tmp/o3"
+#define O3_PATH_LIB "/usr/lib/o3"
+#define O3_PATH_ETC "/etc/o3"
+#endif

@@ -1,0 +1,8 @@
+  <node id="132574749" lat="53.3448589" lon="-6.2524389">
+    <tag k="addr:city" v="Dublin"/>
+    <tag k="addr:country" v="IE"/>
+    <tag k="addr:housenumber" v="37"/>
+    <tag k="addr:street" v="Pearse Street"/>
+    <tag k="amenity" v="pub"/>
+    <tag k="name" v="O'Neill's of Pearse Street"/>
+  </node>

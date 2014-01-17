@@ -1,0 +1,496 @@
+/*
+ * Copyright (C) 2010 Ajax.org BV
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this library; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+#ifndef O3_C_PROCESS1_WIN32_H
+#define O3_C_PROCESS1_WIN32_H
+
+#include <tools_win32.h>
+
+namespace o3{
+
+    struct cProcess : cProcessBase {
+
+        cProcess(iCtx* ctx)
+            : m_stdin_r(0)
+            , m_stdin_w(0)
+            , m_stdout_r(0)
+            , m_stdout_w(0)
+			, m_stderr_r(0)
+			, m_stderr_w(0)
+            , m_terminated(0) 
+            , m_exitcode(0) 
+        {
+            o3_trace_scrfun("cProcess");
+            m_p_info.hProcess = 0;   
+			Var value = ctx->value("out");
+
+			if (value.type() == Var::TYPE_VOID)
+				value = ctx->setValue("out", o3_new(cStream)(GetStdHandle(STD_OUTPUT_HANDLE)));				 
+		
+			m_stdout_default = value.toScr();
+
+			value = ctx->value("err");
+			if (value.type() == Var::TYPE_VOID)
+				value = ctx->setValue("err", o3_new(cStream)(GetStdHandle(STD_ERROR_HANDLE)));				 
+
+			m_stderr_default = value.toScr();
+		}
+	
+        virtual ~cProcess() 
+        {
+        }
+
+        o3_begin_class(cProcessBase)
+        o3_end_class();
+
+		o3_glue_gen()
+
+        HANDLE                  m_stdin_r; 
+        HANDLE                  m_stdin_w; 
+        HANDLE                  m_stdout_r; 
+        HANDLE                  m_stdout_w;
+        HANDLE                  m_stderr_r; 
+        HANDLE                  m_stderr_w;
+        OVERLAPPED              m_overlapped_out;
+		OVERLAPPED              m_overlapped_err;
+        siEvent                 m_event_out;
+        siEvent                 m_event_err;
+		siHandle                m_hprocess;
+        PROCESS_INFORMATION     m_p_info;
+        DWORD                   m_av;
+        siStream				m_stdout_default;
+		siStream				m_stdout_custom;
+        siStream				m_stderr_default;
+		siStream				m_stderr_custom;
+
+		siWeak                  m_ctx;
+        siListener              m_listener_out;
+		siListener              m_listener_err;
+        siListener              m_listener_term;
+        //o3_get_imm() Str        m_output;
+        Str				        m_name;
+        char                    m_first_out;
+		char                    m_first_err;
+        bool			        m_terminated;
+        int						m_exitcode;
+
+        
+        o3_fun int run(iCtx* ctx, const char* app) 
+        {
+            o3_trace_scrfun("run");
+            WStr wapp = Str(app);
+            m_ctx = ctx;
+            return run(ctx, wapp, 0); 
+        }
+
+        o3_fun int runSelf(iCtx* ctx)
+        {
+            o3_trace_scrfun("runSelf");
+            m_ctx = ctx;
+            DWORD error = run(ctx, getSelfPath(), 0);
+            return ((int)error);    
+        }
+
+        o3_fun void runSelfElevated(iCtx* ctx, const Str& args) 
+        {
+            o3_trace_scrfun("runSelfElevated");
+            m_ctx = ctx;			
+            WStr wargs = args;
+			runElevated( ctx, wargs );
+			//runElevated( ctx, getSelfPath(), wargs );
+        }
+
+        o3_fun void runSimple(const char* cmd) 
+        {
+            
+			o3_trace_scrfun("runSimple");
+            
+			o3::runSimple(cmd);
+        }
+
+        o3_get bool valid() 
+        {
+            o3_trace_scrfun("valid");
+            return m_hprocess ? true : false;
+        }
+
+        o3_get int pid() 
+        {
+            o3_trace_scrfun("pid");
+            return (int) m_p_info.dwProcessId;
+        }
+
+        //o3_fun Str receive(iCtx* ctx, int timeout = 0) 
+        //{            
+        //    ctx->loop()->wait( timeout );
+        //    if (!m_onreceive) {
+        //        Str ret = m_output;                
+        //        m_output.clear();
+        //        return ret;
+        //    }
+        //    return Str();
+        //}
+
+        o3_fun void send(const char* input, size_t size)
+        {
+            o3_trace_scrfun("send");
+            unsigned long bread;
+            WaitForInputIdle( m_p_info.hProcess, 1000);
+            WriteFile(m_stdin_w,input,(DWORD)size,&bread,NULL); 
+        }
+        
+        o3_fun void kill() 
+        {
+            o3_trace_scrfun("kill");
+            if(m_hprocess){
+                TerminateProcess((HANDLE)m_hprocess->handle(), 0 );
+                closeHandles();
+                m_hprocess = 0;
+                m_p_info.hProcess = 0;
+                m_p_info.hThread = 0;
+                //m_output.clear();
+            }            
+        }
+
+        static o3_ext("cO3") o3_fun siScr process(iCtx* ctx, const char* name = 0, int pid = 0) 
+        {
+            o3_trace_scrfun("process");
+            cProcess* ret = o3_new(cProcess)(ctx) ;
+            ret->m_p_info.dwProcessId = (DWORD) pid;
+            ret->m_name = name;
+            if(pid) {
+                ret->m_p_info.hProcess = OpenProcess(SYNCHRONIZE|PROCESS_TERMINATE, FALSE,pid);
+                ret->m_hprocess = o3_new(cHandle)(ret->m_p_info.hProcess);
+            }
+            return ret;
+        }
+
+        DWORD run(iCtx* ctx, const wchar_t* app, const wchar_t* currdir=0) 
+        {
+            o3_trace_scrfun("run");
+            STARTUPINFOW si;
+            SECURITY_ATTRIBUTES sa;
+            SECURITY_DESCRIPTOR sd;
+            OSVERSIONINFO osv;
+            osv.dwOSVersionInfoSize = sizeof(osv);
+            GetVersionEx(&osv);
+            // DWORD retval = 0;
+            if (osv.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+                //initialize security descriptor (Windows NT)
+                InitializeSecurityDescriptor(&sd,SECURITY_DESCRIPTOR_REVISION);
+                SetSecurityDescriptorDacl(&sd, true, NULL, false);
+                sa.lpSecurityDescriptor = &sd;
+            }
+            else sa.lpSecurityDescriptor = NULL;
+            sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+            //allow inheritable handles
+            sa.bInheritHandle = TRUE;         
+            
+			setupPipe(&sa, &m_stdout_r, &m_stdout_w, STD_OUTPUT_HANDLE);
+			setupPipe(&sa, &m_stderr_r, &m_stderr_w, STD_ERROR_HANDLE);
+			setupPipe(&sa, &m_stdin_w, &m_stdin_r, STD_INPUT_HANDLE);
+
+            ZeroMemory( &si, sizeof(STARTUPINFO) );
+            si.cb = sizeof(STARTUPINFO);  
+
+            //The dwFlags member tells CreateProcess how to make the process.
+            //STARTF_USESTDHANDLES validates the hStd* members. STARTF_USESHOWWINDOW
+            //validates the wShowWindow member.
+
+            si.dwFlags = STARTF_USESTDHANDLES|STARTF_USESHOWWINDOW;
+            si.wShowWindow = SW_SHOWDEFAULT;//showflags;
+            //set the new handles for the child process
+            si.hStdOutput    = m_stdout_w;
+            si.hStdError    = m_stderr_w;     
+            si.hStdInput    = m_stdin_r;
+ 
+            //spawn the child process
+            WStr cmd = app;
+            if ( ! CreateProcessW(  NULL,cmd.ptr(),
+                                    NULL,
+                                    NULL,
+                                    TRUE,
+                                    CREATE_NO_WINDOW,
+                                    NULL,
+                                    currdir,
+                                    &si,
+                                    &m_p_info ) ) {
+                closeHandles();
+                return (DWORD) -1;
+            }
+			int e = GetLastError();            
+            ZeroMemory( &m_overlapped_out, sizeof(OVERLAPPED) );
+            m_overlapped_out.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+			m_event_out = o3_new(cEvent)(m_overlapped_out.hEvent);                       
+            e = GetLastError();
+
+			ZeroMemory( &m_overlapped_err, sizeof(OVERLAPPED) );
+            m_overlapped_err.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+			m_event_err = o3_new(cEvent)(m_overlapped_err.hEvent);                       
+			e = GetLastError();
+
+            m_listener_out = ctx->loop()->createListener(siHandle(m_event_out).ptr(),0,
+                    Delegate(this, &cProcess::onReceive));
+			m_listener_err = ctx->loop()->createListener(siHandle(m_event_err).ptr(),0,
+                    Delegate(this, &cProcess::onError));
+            m_hprocess = o3_new(cHandle)(m_p_info.hProcess);
+            m_listener_term = ctx->loop()->createListener(m_hprocess.ptr(), 0, 
+                    Delegate(this, &cProcess::onTerminate));
+
+			ReadFile(m_stdout_r, &m_first_out, 1,&m_av,&m_overlapped_out);
+			e = GetLastError();
+			ReadFile(m_stderr_r, &m_first_err, 1,&m_av,&m_overlapped_err);
+			e = GetLastError();
+            //SetStdHandle(STD_INPUT_HANDLE, hSaveStdin);
+            //SetStdHandle(STD_OUTPUT_HANDLE, hSaveStdout);
+			//SetStdHandle(STD_ERROR_HANDLE, hSaveStderr);
+         
+            return m_p_info.dwProcessId;
+        }
+
+		int setupPipe( SECURITY_ATTRIBUTES* sa, HANDLE* toDup, HANDLE* toFetch, DWORD pipeid ) 
+		{
+			o3_trace_scrfun("setupPipe");
+			HANDLE hSave = GetStdHandle(pipeid);
+			//create stdout pipe
+			if (!createPipeEx(toDup,toFetch,sa,0,FILE_FLAG_OVERLAPPED,0)) {
+				closeHandles();
+				return (DWORD) -1;
+			}
+
+			if( !SetStdHandle(pipeid, toFetch) ) {
+				closeHandles();
+				return (DWORD) -1;
+			}
+
+			HANDLE rddup;
+			if( ! DuplicateHandle(    GetCurrentProcess(), 
+				*toDup,
+				GetCurrentProcess(),
+				&rddup,
+				0,
+				FALSE,
+				DUPLICATE_SAME_ACCESS ) ) {
+					/*int e =*/ GetLastError();
+					closeHandles();
+					return (DWORD) -1;
+			}
+
+			CloseHandle( *toDup );*toDup = rddup;
+			SetStdHandle(pipeid, hSave);
+			return 0; //! is this OK?
+		}
+
+        o3_fun bool runElevated( iCtx* ctx, const wchar_t* path, const wchar_t* parameters = NULL, const wchar_t* dir = NULL ) 
+        {
+            o3_trace_scrfun("runElevated");
+            m_name = path;
+
+            SHELLEXECUTEINFOW shex;
+
+            memset( &shex, 0, sizeof( shex) );
+
+            shex.cbSize        = sizeof( SHELLEXECUTEINFOW );
+            shex.fMask        = SEE_MASK_NOCLOSEPROCESS;
+            shex.hwnd        = 0;
+            shex.lpVerb        = L"runas";
+            shex.lpFile        = path;
+            shex.lpParameters  = parameters;
+            shex.lpDirectory    = dir;
+            shex.nShow        = SW_NORMAL;
+
+            ::ShellExecuteExW( &shex );
+            m_p_info.hProcess = shex.hProcess;
+            // DWORD e = GetLastError();
+
+			if (m_p_info.hProcess ) {
+				m_hprocess = o3_new(cHandle)(m_p_info.hProcess);
+                m_listener_term = ctx->loop()->createListener(m_hprocess.ptr(), 0, 
+                        Delegate(this, &cProcess::onTerminate));
+			}
+
+            m_p_info.dwProcessId = (DWORD) -1;
+            //TODO: process ID? 
+            return (int)shex.hInstApp > 32;
+        } 
+
+        void closeHandles() 
+        {
+            o3_trace_scrfun("closeHandles");
+            if (m_stdin_r)  CloseHandle(m_stdin_r);
+            if (m_stdin_w)  CloseHandle(m_stdin_w);
+            if (m_stdout_r) CloseHandle(m_stdout_r);
+            if (m_stdout_w) CloseHandle(m_stdout_w);
+            if (m_stderr_r) CloseHandle(m_stderr_r);
+            if (m_stderr_w) CloseHandle(m_stderr_w);
+
+            m_stdin_r = m_stdin_w = m_stdout_r = m_stdout_w = m_stderr_r = m_stderr_w = 0;
+        }
+
+        void onReceive(iUnk*)
+        {
+			o3_trace_scrfun("onReceive");
+			o3_assert(m_stdout_default);
+            unsigned long b_read;   //bytes read
+            unsigned long avail;   //bytes available			
+			siStream out = m_stdout_custom ? m_stdout_custom : m_stdout_default;
+			
+			// did we read the first char from the stdout of the child process successfully?
+			if(GetOverlappedResult( m_stdout_r, &m_overlapped_out,
+				&b_read, FALSE) && b_read)
+			{
+				// write out the first char
+				out->write(&m_first_out, 1);
+				PeekNamedPipe(m_stdout_r,0,0,0,&avail,NULL);
+				// read/write out the rest
+				Str buf(avail);
+				if (avail != 0) {
+					ReadFile(m_stdout_r, buf.ptr(), avail, &b_read,NULL);
+					buf.resize(b_read);
+					out->write(buf.ptr(),b_read);
+				}
+				
+				// continue listening
+				siHandle h = m_event_out;
+				ZeroMemory( &m_overlapped_out, sizeof(OVERLAPPED) );
+				ResetEvent(h->handle());                
+				m_overlapped_out.hEvent = h->handle();
+				ReadFile(m_stdout_r, &m_first_out, 1,&m_av,&m_overlapped_out);
+			}									
+        }
+
+        void onError(iUnk*)
+        {
+			o3_trace_scrfun("onError");
+			o3_assert(m_stderr_default);
+            unsigned long b_read;   //bytes read
+            unsigned long avail;   //bytes available			
+			siStream err = m_stderr_custom ? m_stderr_custom : m_stderr_default;
+			
+			// did we read the first char from the stderr of the child process successfully?
+			if(GetOverlappedResult( m_stderr_r, &m_overlapped_err,
+				&b_read, FALSE) && b_read)
+			{
+				// write out the first char
+				err->write(&m_first_err, 1);
+				PeekNamedPipe(m_stderr_r,0,0,0,&avail,NULL);
+				// read/write out the rest
+				Str buf(avail);
+				if (avail != 0) {
+					ReadFile(m_stderr_r, buf.ptr(), avail, &b_read,NULL);
+					buf.resize(b_read);
+					err->write(buf.ptr(),b_read);
+				}
+				
+				// continue listening
+				siHandle h = m_event_err;
+				ZeroMemory( &m_overlapped_err, sizeof(OVERLAPPED) );
+				ResetEvent(h->handle());                
+				m_overlapped_err.hEvent = h->handle();
+				ReadFile(m_stderr_r, &m_first_err, 1,&m_av,&m_overlapped_err);
+			}									
+        }
+
+
+        void onTerminate(iUnk*) 
+        {
+            o3_trace_scrfun("onTerminate");
+            DWORD outcode;
+            int32_t ret = GetExitCodeProcess(m_hprocess->handle(),&outcode); 
+            m_exitcode = (int) outcode;
+
+            if (!ret || m_exitcode != STILL_ACTIVE) {
+                m_terminated = m_exitcode < 0;
+                m_listener_out = 0;
+                m_listener_term = 0;
+                //m_listener_in = 0;
+				m_p_info.hProcess = 0;
+                m_hprocess = 0;
+                // DWORD error = GetLastError();                                       
+            }     
+
+            if (m_onterminate)
+                Delegate(siCtx(m_ctx), m_onterminate)(this);
+
+        }
+
+        // NOTE: These functions are only here to that the process component
+        // will compile against the current base. We will have to decide later
+        // on a common interface for the component on each platform.
+        siStream stdIn()
+        {
+			o3_trace_scrfun("stdIn");
+			return siStream();
+            //return m_stdin_custom ? m_stdin_custom : m_stdin_default; 
+        }
+
+        siStream setStdIn(iStream* in)
+        {
+			o3_trace_scrfun("setStdIn");
+			return in;
+            //return m_stdin_custom = in; 
+        }
+
+        siStream stdOut()
+        {
+			o3_trace_scrfun("stdOut");
+			return m_stdout_custom ? m_stdout_custom : m_stdout_default; 
+        }
+
+        siStream setStdOut(iStream* out)
+        {
+            o3_trace_scrfun("setStdOut");
+            return m_stdout_custom = out; 
+        }
+
+        siStream stdErr()
+        {
+            o3_trace_scrfun("stdErr");
+            return m_stderr_custom ? m_stderr_custom : m_stderr_default; 
+        }
+
+        siStream setStdErr(iStream* err)
+        {
+            o3_trace_scrfun("setStdErr");
+            return m_stderr_custom = err; 
+        }
+
+        void exec(iCtx* ctx, const char* args)
+        {
+			o3_trace_scrfun("exec");
+			WStr wargs = Str(args);
+			m_ctx = ctx;
+			run(ctx, wargs, 0);         }
+
+		o3_get int exitCode() {
+			o3_trace_scrfun("exitCode");
+			return m_exitcode;
+		}
+
+		// currently the windows implementation is always listening for termination
+		virtual void startListening() {
+
+		}
+
+		virtual void stopListening() {
+
+		}
+    };
+
+}
+
+#endif // O3_C_PROCESS1_WIN32_H

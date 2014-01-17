@@ -1,0 +1,40 @@
+#!/bin/bash -e
+cd `dirname $0`
+cd ..
+POST='-v4'
+
+#lets copy some stuff
+if [ $# -ne 2 ]
+then
+	echo "Usage: export <modulename> <platform>"
+	exit -1
+fi
+
+echo "exporting $1 to ajaxorg/node-o3-$1 for platform $2 ...."
+
+# lets check out the module
+#rm -rf export
+[ -d "export" ] || mkdir "export"
+cd "export"
+#mkdir node-o3-$1$POST
+[ -d "node-o3-$1$POST" ] || git clone "git@github.com:ajaxorg/node-o3-$1$POST"
+cd "node-o3-$1$POST"
+git pull
+
+mkdir lib || true
+mkdir "lib/o3-$1" || true
+cp "../../modules/$1/index.js" "lib/o3-$1/index.js"
+cp "../../modules/$1/node/README.md" . || true
+cp -r "../../modules/$1/test"  . || true
+cp -r "../../modules/$1/example" . || true
+cp "../../build/default/o3.node" "lib/o3-$1/o3-$2.node" 
+cp "../../modules/o3.js" "lib/o3-$1/o3.js"
+
+#run unittest
+node test/test.js
+
+git add * || true
+git commit -m "Autobuild" || true
+git push
+
+echo "export done"

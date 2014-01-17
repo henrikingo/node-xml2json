@@ -1,0 +1,14 @@
+uniform float time;
+varying float height;
+varying vec3 normal;
+
+void main() 
+{ 
+	vec4 newpos = gl_Vertex;
+	normal = normalize(gl_Normal);
+	height = newpos.y;	
+	
+	gl_TexCoord[0] = gl_MultiTexCoord0;
+	gl_FrontColor = gl_Color;
+	gl_Position = gl_ModelViewProjectionMatrix * newpos;
+}

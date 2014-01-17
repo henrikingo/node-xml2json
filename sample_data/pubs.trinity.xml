@@ -1,0 +1,8 @@
+  <node id="132575554" lat="53.3448011" lon="-6.2521342">
+    <tag k="addr:city" v="Dublin"/>
+    <tag k="addr:country" v="IE"/>
+    <tag k="addr:housenumber" v="37B"/>
+    <tag k="addr:street" v="Pearse Street"/>
+    <tag k="amenity" v="pub"/>
+    <tag k="name" v="The Trinity Inn"/>
+  </node>

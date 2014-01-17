@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundlePackageType</key>
+	<string>BRPL</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en-US</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleVersion</key>
+	<string>0.9</string>
+	<key>CFBundleIdentifier</key>
+	<string>org.ajax.o3-plugin</string>
+	<key>CFBundleName</key>
+	<string>${PRODUCT_NAME}</string>
+	<key>CFBundleExecutable</key>
+	<string>${EXECUTABLE_NAME}</string>
+	<key>WebPluginMIMETypes</key>
+	<dict>
+		<key>application/o3-8a66ecac-63fd-4afa-9d42-3034d18c88f4</key>
+		<dict>
+			<key>WebPluginTypeDescription</key>
+			<string>Ajax.org o3 plugin</string>
+		</dict>
+	</dict>
+	<key>WebPluginDescription</key>
+	<string>Ajax.org o3 plugin</string>
+	<key>WebPluginName</key>
+	<string>o3</string>
+</dict>
+</plist>

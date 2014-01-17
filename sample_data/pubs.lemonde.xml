@@ -1,0 +1,8 @@
+  <node id="130156802" lat="53.3500620" lon="-6.2526730">
+    <tag k="addr:city" v="Dublin"/>
+    <tag k="addr:country" v="IE"/>
+    <tag k="addr:housenumber" v="21"/>
+    <tag k="addr:street" v="Store Street"/>
+    <tag k="amenity" v="pub"/>
+    <tag k="name" v="Le Monde"/>
+  </node>

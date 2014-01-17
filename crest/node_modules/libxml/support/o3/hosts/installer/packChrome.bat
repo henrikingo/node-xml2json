@@ -1,0 +1,1 @@
+call %userprofile%\AppData\Local\Google\Chrome\Application\chrome.exe --pack-extension=%CD%\settingsChrome --pack-extension-key=%CD%\o3settings.pem --no-message-box

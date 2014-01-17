@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="libevent">
+</Property><Property Name="Solution File" Value="C:\Development\o3\o3\deps\libevent-1.4.14b-stable\WIN32-Prj\libevent.sln">
+</Property><Property Name="Date" Value="Friday, October 29, 2010">
+</Property><Property Name="Time" Value="11:51 AM">
+</Property></Properties><Event ErrorLevel="0" Project="" Source="libevent.sln" Description="File successfully backed up as C:\Development\o3\o3\deps\libevent-1.4.14b-stable\WIN32-Prj\libevent.sln.old">
+</Event><Event ErrorLevel="2" Project="event_test" Source="event_test\event_test.vcproj" Description="Failed to upgrade project file 'C:\Development\o3\o3\deps\libevent-1.4.14b-stable\WIN32-Prj\event_test\event_test.vcproj'.  Please make sure the file exists and is not write-protected.">
+</Event><Event ErrorLevel="2" Project="event_test" Source="event_test\event_test.vcproj" Description="Project upgrade failed.">
+</Event><Event ErrorLevel="3" Project="event_test" Source="event_test\event_test.vcproj" Description="Not Converted">
+</Event><Event ErrorLevel="1" Project="libevent" Source="libevent.vcproj" Description="This application has been updated to include settings related to the User Account Control (UAC) feature of Windows Vista. By default, when run on Windows Vista with UAC enabled, this application is marked to run with the same privileges as the process that launched it. This marking also disables the application from running with virtualization. You can change UAC related settings from the Property Pages of the project.">
+</Event><Event ErrorLevel="0" Project="libevent" Source="libevent.vcproj" Description="Project file successfully backed up as 'C:\Development\o3\o3\deps\libevent-1.4.14b-stable\WIN32-Prj\libevent.vcproj.8.00.old'.">
+</Event><Event ErrorLevel="0" Project="libevent" Source="libevent.vcproj" Description="Project upgraded successfully.">
+</Event><Event ErrorLevel="3" Project="libevent" Source="libevent.vcproj" Description="Converted">
+</Event><Event ErrorLevel="2" Project="signal_test" Source="signal_test\signal_test.vcproj" Description="Failed to upgrade project file 'C:\Development\o3\o3\deps\libevent-1.4.14b-stable\WIN32-Prj\signal_test\signal_test.vcproj'.  Please make sure the file exists and is not write-protected.">
+</Event><Event ErrorLevel="2" Project="signal_test" Source="signal_test\signal_test.vcproj" Description="Project upgrade failed.">
+</Event><Event ErrorLevel="3" Project="signal_test" Source="signal_test\signal_test.vcproj" Description="Not Converted">
+</Event><Event ErrorLevel="2" Project="time_test" Source="time_test\time_test.vcproj" Description="Failed to upgrade project file 'C:\Development\o3\o3\deps\libevent-1.4.14b-stable\WIN32-Prj\time_test\time_test.vcproj'.  Please make sure the file exists and is not write-protected.">
+</Event><Event ErrorLevel="2" Project="time_test" Source="time_test\time_test.vcproj" Description="Project upgrade failed.">
+</Event><Event ErrorLevel="3" Project="time_test" Source="time_test\time_test.vcproj" Description="Not Converted">
+</Event><Event ErrorLevel="0" Project="regress" Source="regress\regress.vcproj" Description="Web deployment to the local IIS server is no longer supported. The Web Deployment build tool has been removed from your project settings.">
+</Event><Event ErrorLevel="1" Project="regress" Source="regress\regress.vcproj" Description="This application has been updated to include settings related to the User Account Control (UAC) feature of Windows Vista. By default, when run on Windows Vista with UAC enabled, this application is marked to run with the same privileges as the process that launched it. This marking also disables the application from running with virtualization. You can change UAC related settings from the Property Pages of the project.">
+</Event><Event ErrorLevel="0" Project="regress" Source="regress\regress.vcproj" Description="Project file successfully backed up as 'C:\Development\o3\o3\deps\libevent-1.4.14b-stable\WIN32-Prj\regress\regress.vcproj.8.00.old'.">
+</Event><Event ErrorLevel="0" Project="regress" Source="regress\regress.vcproj" Description="Project upgraded successfully.">
+</Event><Event ErrorLevel="3" Project="regress" Source="regress\regress.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="libevent.sln" Description="Solution converted successfully">
+</Event><Event ErrorLevel="3" Project="" Source="libevent.sln" Description="Converted">
+</Event></UpgradeLog>
