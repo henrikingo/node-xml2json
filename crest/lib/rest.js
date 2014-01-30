@@ -17,12 +17,92 @@ var MongoClient = require("mongodb").MongoClient,
 debug("rest.js is loaded");
 
 
+server.get('/testXML', function (req, res) {
+  debug("testXML");
+  
+  jsObj = { foo : "bar" };
+  xmlStr = "<hello>world</hello>";
+  xmlStr2 = '<xml id="123">byo id</xml>';
+  xmlStr3 = '<a id="345"><b foo="bar">Hello</b><c><d foo="baz">There</d><e>World</e></c></a>';
+
+    //Insert a js object and 2 xml strings
+    MongoClient.connect(util.connectionURL("test", config), function (err, db) {
+      debug( "MongoClient.connect callback( err=" + err + " , db = " + db + " )" );
+      var collection = db.collection("dublindemo");
+      
+      collection.drop();
+      
+      collection.insert( jsObj, function (err, docs) {
+         console.log("insert1 err=" + err);
+         console.log( jsObj );
+
+      collection.insert( xmlStr, function (err, docs) {
+         console.log("insert2 err=" + err);
+         console.log( xmlStr );
+
+      collection.insert( xmlStr2, function (err, docs) {
+         console.log("insert3 err=" + err);
+         console.log( xmlStr2 );
+
+      collection.insert( xmlStr3, function (err, docs) {
+         console.log("insert3 err=" + err);
+         console.log( xmlStr3 );
+
+          // Now query them
+          jsquery = { foo : "bar" };
+          xmlquery = "/";
+          xmlquery2 = '/xml';
+          //xmlquery3 = '<a><b>Hello</b></a>';
+          xmlquery3 = '/a/c/d[@foo=baz]';
+          xmlfields = '/a/b';
+          collection.find( jsquery ).toArray(function(err, docs){
+                console.log("jsquery");
+                docs.forEach(function (doc) {
+                  console.log(doc);
+                });
+          collection.find( xmlquery ).toArray(function(err, docs){
+                console.log("xmlquery");
+                docs.forEach(function (doc) {
+                  console.log(doc);
+                });
+          collection.find( xmlquery2 ).toArray(function(err, docs){
+                console.log("xmlquery2");
+                docs.forEach(function (doc) {
+                  console.log(doc);
+                });
+          collection.find( xmlquery3, xmlfields ).toArray(function(err, docs){
+                console.log("xmlquery3");
+                docs.forEach(function (doc) {
+                  console.log(doc);
+                });
+            });
+            });
+            });
+            });
+      });
+      });
+      });
+      });
+
+
+    res.header('Location', '/' + req.params.db + '/' + req.params.collection + '/');
+    res.set('content-type', 'application/json; charset=utf-8');
+    res.json(201, {"testXML": "You got to the end of testXML(), but check console output for debug messages to know how it went."});
+    });
+});
+
+
+
+
+
+
+
+
 /**
  * Query
  */
 function handleGet(req, res, next) {
   debug("GET-request recieved");
-  console.log(req.query);
   var query;
   // Providing an id overwrites giving a query in the URL
   if (req.params.id) {

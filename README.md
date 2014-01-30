@@ -1,3 +1,11 @@
+Experimental Notice
+===================
+
+Note: You have checked out an experimental branch. This thing will do the
+same as the master branch, but instead of doing the xml translation as a 
+node.js module, we want to move it into the mongodb connector. The node.js
+code will then simply feed xml into the mongodb connector.
+
 Installation
 ============
 
